@@ -1,0 +1,7 @@
+div {
+  @apply scrollbar-thin;
+}
+
+.text-main {
+  @apply text-base-content;
+}

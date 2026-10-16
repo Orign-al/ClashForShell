@@ -1,0 +1,32 @@
+services:
+  mihomo:
+    image: clashforshell:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      TZ: Etc/UTC
+      SUB_STORE_BACKEND_API_HOST: 127.0.0.1
+      SUB_STORE_BACKEND_API_PORT: 23001
+      SUB_STORE_FRONTEND_HOST: 0.0.0.0
+      SUB_STORE_FRONTEND_PORT: 23002
+      SUB_STORE_FRONTEND_BACKEND_PATH: /mihomo-sub-store-api
+      SUB_STORE_CORS_ALLOWED_ORIGINS: http://192.168.4.52:23002,http://10.10.10.210:23002,http://127.0.0.1:23002,http://localhost:23002
+    volumes:
+      - ./config:/root/.config/mihomo
+      - sub-store-data:/opt/sub-store/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          token=$$(sed -n 's/^secret: "\([^\"]*\)"$$/\1/p' /root/.config/mihomo/config.yaml);
+          wget --header="Authorization: Bearer $$token" -qO- http://127.0.0.1:29090/version >/dev/null
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  sub-store-data:

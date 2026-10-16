@@ -1,0 +1,6 @@
+@config '../../../../tailwind.config.ts';
+
+@plugin 'daisyui' {
+  themes: all;
+  exclude: rootscrollgutter;
+}

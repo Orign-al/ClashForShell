@@ -1,0 +1,11 @@
+.git
+.env
+config
+dashboard/node_modules
+dashboard/.pnpm-store
+dashboard/src
+dashboard/test
+dashboard/docs
+dashboard/.git
+dashboard/dist-ssr
+**/*.log

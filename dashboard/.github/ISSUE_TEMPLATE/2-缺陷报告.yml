@@ -1,0 +1,96 @@
+name: 缺陷报告
+description: 创建一个报告来帮助我们改进
+title: '[Bug]: '
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢您报告bug！在提交之前，请搜索[现有issues](https://github.com/Zephyruso/zashboard/issues)看看您的问题是否已经被报告过。
+
+        **如有可能，请尽量附上 bug 的录屏或截图**，这是我们理解并修复问题最快的方式。
+
+        另外请注意：“XX 版本是好的，这个版本坏了”这种描述并没有你相信的那么有用。缺少具体的复现步骤、截图或录屏，仅凭这句话我们无法复现，也无从排查。
+
+  - type: input
+    id: zashboard-version
+    attributes:
+      label: zashboard版本
+      description: 您使用的zashboard版本（例如：1.81.0 或 gh-pages commit hash）
+      placeholder: '例如：1.81.0'
+    validations:
+      required: true
+
+  - type: input
+    id: system-info
+    attributes:
+      label: 系统信息
+      description: 您的操作系统和版本
+      placeholder: '例如：Windows 10, macOS Catalina 10.15.7, Ubuntu 20.04'
+    validations:
+      required: true
+
+  - type: input
+    id: zashboard-usage
+    attributes:
+      label: zashboard 使用方式
+      description: 您使用zashboard的方式 (e.g., mihomo cli, openwrt插件如Nikki, Docker)
+      placeholder: 'e.g., mihomo cli, openwrt插件如Nikki, Docker'
+    validations:
+      required: true
+
+  - type: input
+    id: browser-info
+    attributes:
+      label: 浏览器信息
+      description: 您的浏览器和版本
+      placeholder: '例如：Chrome 91.0, Firefox 89.0, Safari 14.1'
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: 重现步骤
+      description: 重现这个bug的详细步骤
+      placeholder: |
+        1. 第一步
+        2. 第二步
+        3. 第三步
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: 期望行为
+      description: 您期望发生的事情
+      placeholder: '描述您期望看到的行为'
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: 实际行为
+      description: 实际发生的事情
+      placeholder: '描述实际发生的行为'
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: 截图 / 录屏
+      description: '如有可能，请尽量提供 bug 的录屏或截图。一段完整展示操作过程的短视频能让我们更快地复现并修复问题。可以直接把图片或视频拖拽到此处。'
+      placeholder: '把录屏或截图拖拽到这里'
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: 额外信息
+      description: 任何其他可能有助于解决此问题的上下文或信息
+      placeholder: '其他相关信息'
+    validations:
+      required: false

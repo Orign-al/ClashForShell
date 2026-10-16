@@ -1,0 +1,61 @@
+@keyframes bounceIn {
+  0% {
+    opacity: 0.5;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes bounceInForPC {
+  0% {
+    opacity: 0.5;
+    transform: scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.bounce-in {
+  animation: bounceIn 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@media screen and (min-width: 1024px) {
+  .bounce-in {
+    animation: bounceInForPC 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+}
+
+.nav-indicator {
+  transform-origin: center;
+}
+
+.nav-indicator-ready {
+  transition:
+    transform 0.24s cubic-bezier(0.32, 0.72, 0, 1),
+    width 0.24s cubic-bezier(0.32, 0.72, 0, 1),
+    height 0.24s cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 0.15s ease-out;
+}
+
+.nav-item {
+  transition:
+    color 0.24s cubic-bezier(0.32, 0.72, 0, 1),
+    background-color 0.24s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-indicator-ready,
+  .nav-item {
+    transition: none;
+  }
+}
+
+:root {
+  --page-transition-duration: 0.35s;
+  --page-transition-ease: cubic-bezier(0.32, 0.72, 0, 1);
+}

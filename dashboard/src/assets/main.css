@@ -1,0 +1,15 @@
+@import 'tailwindcss';
+
+@import './styles/theme/setup.css';
+@import './styles/theme/fonts.css';
+@import './styles/theme/presets.css';
+@import './styles/theme/tokens.css';
+
+@import './styles/base/elements.css';
+
+@import './styles/components/daisyui.css';
+@import './styles/components/app.css';
+@import './styles/components/tooltip.css';
+
+@import './styles/utilities/appearance.css';
+@import './styles/utilities/motion.css';

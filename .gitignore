@@ -1,0 +1,12 @@
+.env
+config/config.yaml
+config/*.dat
+config/*.mmdb
+config/*.metadb
+config/*.db
+!config/.gitkeep
+config/ui/
+config/proxy_providers/
+config/country.mmdb
+config/geoip.dat
+config/geosite.dat

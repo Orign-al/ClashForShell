@@ -1,0 +1,107 @@
+@utility base-container {
+  @apply bg-base-100 overflow-hidden rounded-xl shadow-xs;
+}
+
+@utility floating-menu-panel {
+  @apply border-base-border bg-base-100 text-base-content fixed z-[100000] overflow-y-auto rounded-lg border p-1 shadow-lg;
+}
+
+@utility floating-menu-option {
+  @apply flex cursor-pointer items-center rounded-md px-2 py-1.5 text-sm transition-colors outline-none;
+}
+
+.floating-menu-enter-active,
+.floating-menu-leave-active {
+  transition:
+    opacity 0.12s ease,
+    transform 0.12s ease;
+}
+
+.floating-menu-enter-from,
+.floating-menu-leave-to {
+  opacity: 0;
+  transform: translateY(-0.25rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-menu-enter-active,
+  .floating-menu-leave-active {
+    transition: none;
+  }
+}
+
+.nav-menu {
+  @apply flex min-w-0;
+}
+
+.nav-item {
+  @apply relative z-10 flex min-w-0 items-center rounded-lg outline-none select-none;
+  color: var(--color-base-content);
+}
+
+.nav-item-icon {
+  @apply shrink-0;
+  color: var(--color-base-content);
+  stroke-width: 1.75;
+}
+
+.nav-indicator {
+  border-radius: 0.5rem;
+}
+
+.nav-item[aria-current='page'],
+.nav-item[aria-selected='true'] {
+  color: var(--color-base-content);
+  font-weight: 500;
+}
+
+@media (hover: hover) {
+  .nav-item:not([aria-current='page'], [aria-selected='true']):hover {
+    background-color: color-mix(in srgb, var(--color-base-content) 5%, transparent);
+    color: var(--color-base-content);
+  }
+}
+
+.nav-item:not([aria-current='page'], [aria-selected='true']):active {
+  background-color: color-mix(in srgb, var(--color-base-content) 10%, transparent);
+  transition-duration: 0s;
+}
+
+.nav-item:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+.nav-item-count {
+  @apply shrink-0 font-normal whitespace-nowrap tabular-nums;
+  color: color-mix(in srgb, var(--color-base-content) 45%, transparent);
+}
+
+.settings-section-label {
+  @apply px-1 pt-5 pb-2 text-xs tracking-wider uppercase first:pt-2;
+  color: color-mix(in srgb, var(--color-base-content) 40%, transparent);
+}
+.settings-grid {
+  @apply bg-base-100 grid grid-cols-1 overflow-hidden rounded-xl;
+}
+.setting-item {
+  @apply border-base-border flex min-h-12 items-center gap-3 border-b px-4 py-2 outline-none;
+  &:last-child {
+    border-bottom: none;
+  }
+  .setting-item-label {
+    @apply min-w-0 grow text-sm;
+    svg {
+      @apply text-base-content/40 inline-block;
+    }
+  }
+  .setting-item-summary {
+    @apply text-base-content/45 mt-0.5 block text-xs leading-4 font-normal;
+  }
+  &:focus-visible {
+    @apply ring-primary ring-2 ring-inset;
+  }
+}
+.settings-dependent-item {
+  @apply bg-base-200/25 pl-7;
+}

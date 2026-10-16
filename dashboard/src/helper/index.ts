@@ -1,0 +1,165 @@
+import { connectionAccessor } from '@/assembly/connections'
+import { proxyMap } from '@/assembly/proxies'
+import { NOT_CONNECTED, PROXY_CHAIN_DIRECTION, PROXY_TYPE, ROUTE_NAME } from '@/constant'
+import { showNotification } from '@/helper/notification'
+import { hiddenGroupMap } from '@/store/proxies'
+import {
+  customCSS,
+  customThemes,
+  lowLatency,
+  mediumLatency,
+  proxyChainDirection,
+  splitOverviewPage,
+} from '@/store/settings'
+import type { Connection } from '@/types'
+import { computed } from 'vue'
+
+const PROXY_GROUP_TYPES = new Set<string>(Object.values(PROXY_TYPE))
+
+export const isProxyGroup = (name: string) => {
+  const proxyNode = proxyMap.value[name]
+
+  if (!proxyNode) {
+    return false
+  }
+
+  if (proxyNode.all?.length) {
+    return true
+  }
+
+  return PROXY_GROUP_TYPES.has(proxyNode.type.toLowerCase())
+}
+
+export const getConnectionChains = (connection: Connection) =>
+  connectionAccessor().chains(connection)
+
+export const getConnectionDownload = (connection: Connection) =>
+  connectionAccessor().download(connection)
+
+export const getConnectionUpload = (connection: Connection) =>
+  connectionAccessor().upload(connection)
+
+export const getConnectionStart = (connection: Connection) => connectionAccessor().start(connection)
+
+export const getConnectionRule = (connection: Connection) => connectionAccessor().rule(connection)
+
+export const getConnectionRulePayload = (connection: Connection) =>
+  connectionAccessor().rulePayload(connection)
+
+export const getConnectionSourceIP = (connection: Connection) =>
+  connectionAccessor().sourceIP(connection)
+
+export const getConnectionSmartBlock = (connection: Connection) =>
+  connectionAccessor().smartBlock(connection)
+
+export const getConnectionHostname = (connection: Connection) =>
+  connectionAccessor().hostname(connection)
+
+export const getHostFromConnection = (connection: Connection) =>
+  connectionAccessor().host(connection)
+
+export const getProcessFromConnection = (connection: Connection) =>
+  connectionAccessor().process(connection)
+
+export const getDestinationFromConnection = (connection: Connection) =>
+  connectionAccessor().destination(connection)
+
+export const getNetworkTypeFromConnection = (connection: Connection) =>
+  connectionAccessor().networkType(connection)
+
+export const getInboundUserFromConnection = (connection: Connection) =>
+  connectionAccessor().inboundUser(connection)
+
+export const getChainsStringFromConnection = (connection: Connection) => {
+  const chains = [...getConnectionChains(connection)]
+
+  if (proxyChainDirection.value === PROXY_CHAIN_DIRECTION.NORMAL) {
+    chains.reverse()
+  }
+
+  return chains.join('')
+}
+
+export const getColorForLatency = (latency: number) => {
+  if (latency === NOT_CONNECTED) {
+    return ''
+  } else if (latency < lowLatency.value) {
+    return 'text-low-latency'
+  } else if (latency < mediumLatency.value) {
+    return 'text-medium-latency'
+  } else {
+    return 'text-high-latency'
+  }
+}
+
+export const renderRoutes = computed(() =>
+  Object.values(ROUTE_NAME).filter((r) => {
+    if (r === ROUTE_NAME.setup) return false
+    if (!splitOverviewPage.value && r === ROUTE_NAME.overview) return false
+    return true
+  }),
+)
+
+export const applyCustomThemes = () => {
+  document.querySelectorAll('.custom-theme').forEach((style) => {
+    style.remove()
+  })
+  customThemes.value.forEach((theme) => {
+    const style = document.createElement('style')
+    const styleString = Object.entries(theme)
+      .filter(([key]) => !['prefersdark', 'default', 'name', 'type', 'id'].includes(key))
+      .map(([key, value]) => `${key}:${value}`)
+      .join(';')
+
+    style.innerHTML = `[data-theme="${theme.name}"] {
+      ${styleString} 
+    }`
+
+    style.className = `custom-theme ${theme.name}`
+    document.head.appendChild(style)
+  })
+}
+
+export const applyCustomCSS = () => {
+  const styleId = 'custom-css'
+  const css = customCSS.value.trim()
+  let style = document.getElementById(styleId)
+
+  if (!css) {
+    style?.remove()
+    return
+  }
+
+  if (!style) {
+    style = document.createElement('style')
+    style.id = styleId
+    document.head.appendChild(style)
+  }
+
+  style.textContent = css
+}
+
+export const applyKsuTheme = () => {
+  if (window.ksu) {
+    const link = document.createElement('link')
+    link.rel = 'stylesheet'
+    link.href = 'https://mui.kernelsu.org/internal/colors.css'
+    document.head.appendChild(link)
+  }
+}
+
+export const isHiddenGroup = (group: string) => {
+  if (Reflect.has(hiddenGroupMap.value, group)) {
+    return hiddenGroupMap.value[group]
+  }
+
+  return proxyMap.value[group]?.hidden
+}
+
+export const handlerUpgradeSuccess = (key?: string) => {
+  showNotification({
+    key,
+    content: 'upgradeSuccess',
+    type: 'alert-success',
+  })
+}

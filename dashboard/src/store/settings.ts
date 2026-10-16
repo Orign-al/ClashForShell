@@ -1,0 +1,444 @@
+import { useStorage } from '@/composables/use-storage'
+import { DEFAULT_SETTINGS_MENU_ORDER } from '@/config/settings-items'
+import {
+  ALL_THEME,
+  CONNECTION_DISPLAY_STYLE,
+  CONNECTIONS_TABLE_ACCESSOR_KEY,
+  DETAILED_CARD_STYLE,
+  EMOJIS,
+  FOLDER_MODE,
+  FONTS,
+  GEOIP_ASN_DATABASE_URL,
+  GEOIP_COUNTRY_DATABASE_URL,
+  IP_INFO_API,
+  IS_APPLE_DEVICE,
+  LANG,
+  LIST_DISPLAY_STYLE,
+  OVERVIEW_CARD,
+  PROXY_CARD_SIZE,
+  PROXY_CHAIN_DIRECTION,
+  PROXY_PREVIEW_TYPE,
+  PROXY_SEARCH_MODE,
+  PROXY_SORT_TYPE,
+  SETTINGS_MENU_KEY,
+  SPEEDTEST_MODE,
+  TABLE_SIZE,
+  TABLE_WIDTH_MODE,
+  TEST_URL,
+  type THEME,
+} from '@/constant'
+import { getMinCardWidth, isMiddleScreen, isPreferredDark } from '@/helper/utils'
+import type { SourceIPLabel } from '@/types'
+import { computed } from 'vue'
+
+const migrateLegacyStorageKey = (legacyKey: string, nextKey: string) => {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  const legacyValue = localStorage.getItem(legacyKey)
+  const nextValue = localStorage.getItem(nextKey)
+
+  if (legacyValue !== null && nextValue === null) {
+    localStorage.setItem(nextKey, legacyValue)
+  }
+  localStorage.removeItem(legacyKey)
+}
+
+migrateLegacyStorageKey('config/show-seleted-for-now-node', 'config/show-selected-for-now-node')
+migrateLegacyStorageKey('config/use-connecticon-card', 'config/use-connection-card')
+migrateLegacyStorageKey('config/connecticon-table-size', 'config/connection-table-size')
+migrateLegacyStorageKey('config/ipv6-map', 'cache/ipv6-map')
+migrateLegacyStorageKey('config/collapse-group-map', 'cache/collapse-group-map')
+migrateLegacyStorageKey('config/log-search-history', 'cache/log-search-history')
+
+const migrateLegacyConnectionDisplayStyle = () => {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  const nextKey = 'config/connection-display-style'
+  const nextValue = localStorage.getItem(nextKey)
+  const legacyKey = 'config/use-connection-card'
+
+  if (nextValue !== null) {
+    return
+  }
+
+  const legacyValue = localStorage.getItem(legacyKey)
+
+  if (legacyValue === 'true' || legacyValue === 'false') {
+    localStorage.setItem(
+      nextKey,
+      legacyValue === 'true' ? CONNECTION_DISPLAY_STYLE.CARD : CONNECTION_DISPLAY_STYLE.TABLE,
+    )
+  }
+
+  localStorage.removeItem(legacyKey)
+}
+
+migrateLegacyConnectionDisplayStyle()
+
+const migrateIPAPISettings = () => {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  const globalAPI = localStorage.getItem('config/geoip-info-api')
+  const secondaryKey = 'config/ip-check-secondary-api'
+
+  if (
+    localStorage.getItem(secondaryKey) === null &&
+    globalAPI !== IP_INFO_API.IPIP &&
+    Object.values(IP_INFO_API).includes(globalAPI as IP_INFO_API)
+  ) {
+    localStorage.setItem(secondaryKey, globalAPI as string)
+  }
+
+  const legacyEarthKey = 'config/earth-origin-source'
+  const earthKey = 'config/earth-ip-info-api'
+  const legacyEarthSource = localStorage.getItem(legacyEarthKey)
+
+  if (localStorage.getItem(earthKey) === null) {
+    if (legacyEarthSource === 'china') {
+      localStorage.setItem(earthKey, IP_INFO_API.IPIP)
+    } else if (legacyEarthSource === 'global') {
+      localStorage.setItem(earthKey, IP_INFO_API.IPSB)
+    }
+  }
+
+  localStorage.removeItem(legacyEarthKey)
+}
+
+migrateIPAPISettings()
+
+export const defaultTheme = useStorage<string>('config/default-theme', 'light')
+export const darkTheme = useStorage<string>('config/dark-theme', 'dark')
+export const autoTheme = useStorage<boolean>('config/auto-theme', true)
+export const theme = computed(() => {
+  if (autoTheme.value && isPreferredDark.value) {
+    return darkTheme.value
+  }
+  return defaultTheme.value
+})
+export const customThemes = useStorage<THEME[]>('config/custom-themes', [])
+
+const replaceLegacyTheme = (theme: string, defaultTheme: string) => {
+  const legacyThemeReplacements: Record<string, string> = {
+    'dark-apple': 'dark',
+    lofi: 'light',
+    wireframe: 'light',
+    black: 'dark-neutral',
+    business: 'dark-neutral',
+  }
+
+  if (theme in legacyThemeReplacements) {
+    return legacyThemeReplacements[theme]
+  }
+  if ([...ALL_THEME, ...customThemes.value.map((theme) => theme.name)].includes(theme)) {
+    return theme
+  }
+  return defaultTheme
+}
+
+const migratedDefaultTheme = replaceLegacyTheme(defaultTheme.value, 'light')
+if (migratedDefaultTheme !== defaultTheme.value) {
+  defaultTheme.value = migratedDefaultTheme
+}
+const migratedDarkTheme = replaceLegacyTheme(darkTheme.value, 'dark')
+if (migratedDarkTheme !== darkTheme.value) {
+  darkTheme.value = migratedDarkTheme
+}
+
+export const language = useStorage<LANG>(
+  'config/language',
+  Object.values(LANG).includes(navigator.language as LANG)
+    ? (navigator.language as LANG)
+    : LANG.EN_US,
+)
+export const isSidebarCollapsedConfig = useStorage('config/is-sidebar-collapsed', true)
+export const isSidebarCollapsed = computed({
+  get: () => {
+    if (isMiddleScreen.value) {
+      return true
+    }
+
+    return isSidebarCollapsedConfig.value
+  },
+  set: (value) => {
+    isSidebarCollapsedConfig.value = value
+  },
+})
+const fontConfig = useStorage<FONTS>('config/font', FONTS.MI_SANS)
+export const font = computed({
+  get: () => {
+    const mode = import.meta.env.MODE
+    if (Object.values(FONTS).includes(mode as FONTS)) {
+      return mode as FONTS
+    }
+    return fontConfig.value
+  },
+  set: (val) => {
+    fontConfig.value = val
+  },
+})
+export const emoji = useStorage<EMOJIS>(
+  'config/emoji',
+  IS_APPLE_DEVICE ? EMOJIS.TWEMOJI : EMOJIS.NOTO_COLOR_EMOJI,
+)
+export const customBackgroundURL = useStorage('config/custom-background-image', '')
+export const customCSS = useStorage('config/custom-css', '')
+export const dashboardTransparent = useStorage('config/dashboard-transparent', 90)
+export const autoUpgradeDashboard = useStorage('config/auto-upgrade', false)
+export const checkUpgradeCore = useStorage('config/check-upgrade-core', true)
+export const autoUpgradeCore = useStorage('config/auto-upgrade-core', false)
+export const swipeInPages = useStorage('config/swipe-in-pages', true)
+export const swipeInTabs = useStorage('config/swipe-in-tabs', false)
+export const disablePullToRefresh = useStorage('config/disable-pull-to-refresh', true)
+export const displayAllFeatures = useStorage('config/display-all-features', false)
+export const blurIntensity = useStorage('config/blur-intensity', 10)
+export const scrollAnimationEffect = useStorage('config/scroll-animation-effect', true)
+export const IPInfoAPI = useStorage<IP_INFO_API>('config/geoip-info-api', IP_INFO_API.IPSB)
+if (IPInfoAPI.value === IP_INFO_API.IPIP) {
+  IPInfoAPI.value = IP_INFO_API.IPSB
+}
+export const geoipCountryDatabaseURL = useStorage(
+  'config/geoip-country-database-url',
+  GEOIP_COUNTRY_DATABASE_URL,
+)
+export const geoipASNDatabaseURL = useStorage(
+  'config/geoip-asn-database-url',
+  GEOIP_ASN_DATABASE_URL,
+)
+export const autoDisconnectIdleUDP = useStorage('config/auto-disconnect-idle-udp', false)
+export const autoDisconnectIdleUDPTime = useStorage('config/auto-disconnect-idle-udp-time', 300)
+export const keyboardShortcuts = useStorage<Record<string, string>>('config/keyboard-shortcuts', {})
+
+export const splitOverviewPage = useStorage('config/split-overview-page', false)
+export const autoIPCheck = useStorage('config/auto-ip-check', true)
+export const ipCheckPrimaryAPI = useStorage<IP_INFO_API>(
+  'config/ip-check-primary-api',
+  IP_INFO_API.IPIP,
+)
+export const ipCheckSecondaryAPI = useStorage<IP_INFO_API>(
+  'config/ip-check-secondary-api',
+  IP_INFO_API.IPSB,
+)
+export const autoConnectionCheck = useStorage('config/auto-connection-check', true)
+export const showStatisticsWhenSidebarCollapsed = useStorage(
+  'config/show-statistics-when-sidebar-collapsed',
+  true,
+)
+export const numberOfChartsInSidebar = useStorage<1 | 2 | 3>(
+  'config/number-of-charts-in-sidebar',
+  1,
+)
+const defaultOverviewCardOrder: { card: OVERVIEW_CARD; visible: boolean }[] = [
+  {
+    card: OVERVIEW_CARD.ChartsCard,
+    visible: true,
+  },
+  {
+    card: OVERVIEW_CARD.NetworkCard,
+    visible: true,
+  },
+  {
+    card: OVERVIEW_CARD.EarthGlobeCard,
+    visible: true,
+  },
+  {
+    card: OVERVIEW_CARD.TopologyCharts,
+    visible: true,
+  },
+  {
+    card: OVERVIEW_CARD.ProviderTrafficOverview,
+    visible: true,
+  },
+  {
+    card: OVERVIEW_CARD.ConnectionHistory,
+    visible: true,
+  },
+  {
+    card: OVERVIEW_CARD.RuleHitCountCard,
+    visible: true,
+  },
+  {
+    card: OVERVIEW_CARD.HonkStatsCard,
+    visible: true,
+  },
+]
+
+export const overviewCardOrder = useStorage<{ card: OVERVIEW_CARD; visible: boolean }[]>(
+  'config/overview-card-order',
+  defaultOverviewCardOrder,
+)
+
+const allCardTypes = Object.values(OVERVIEW_CARD)
+const existingCardTypes = new Set(overviewCardOrder.value.map((item) => item.card))
+const missingCards = allCardTypes.filter((card) => !existingCardTypes.has(card))
+
+if (missingCards.length > 0) {
+  const nextOrder = [...overviewCardOrder.value]
+
+  for (const card of missingCards) {
+    const item = { card, visible: true }
+
+    if (card === OVERVIEW_CARD.EarthGlobeCard) {
+      const topologyIndex = nextOrder.findIndex(({ card }) => card === OVERVIEW_CARD.TopologyCharts)
+      nextOrder.splice(topologyIndex === -1 ? nextOrder.length : topologyIndex, 0, item)
+    } else {
+      nextOrder.push(item)
+    }
+  }
+
+  overviewCardOrder.value = nextOrder
+}
+
+export const earthIPInfoAPI = useStorage<IP_INFO_API>('config/earth-ip-info-api', IP_INFO_API.IPIP)
+export const earthVisualMode = useStorage<'flat' | 'space'>('config/earth-visual-mode', 'flat')
+export const earthProjection = useStorage<'3d' | '2d'>('config/earth-projection', '3d')
+export const topologyApplyConnectionFilter = useStorage(
+  'config/topology-apply-connection-filter',
+  true,
+)
+
+export const collapseGroupMap = useStorage<Record<string, boolean>>('cache/collapse-group-map', {})
+export const proxyGroupFilterMap = useStorage<Record<string, string>>(
+  'cache/proxy-group-filter-map',
+  {},
+)
+export const displayFinalOutbound = useStorage('config/show-selected-for-now-node', false)
+export const twoColumnProxyGroup = useStorage('config/two-columns', true)
+export const proxyFolderMode = useStorage<FOLDER_MODE>(
+  'config/proxy-folder-mode-setting',
+  FOLDER_MODE.AUTO,
+)
+
+export const speedtestUrl = useStorage<string>('config/speedtest-url', TEST_URL)
+export const independentLatencyTest = useStorage('config/independent-latency-test', false)
+export const speedtestTimeout = useStorage<number>('config/speedtest-timeout', 5000)
+export const speedtestMode = useStorage<SPEEDTEST_MODE>(
+  'config/speedtest-mode',
+  SPEEDTEST_MODE.DASHBOARD,
+)
+export const proxySearchMode = useStorage<PROXY_SEARCH_MODE>(
+  'config/proxy-search-mode',
+  PROXY_SEARCH_MODE.GROUP,
+)
+export const proxyProviderSearchMode = useStorage<PROXY_SEARCH_MODE>(
+  'config/proxy-provider-search-mode',
+  PROXY_SEARCH_MODE.GLOBAL,
+)
+export const proxySortType = useStorage<PROXY_SORT_TYPE>(
+  'config/proxy-sort-type',
+  PROXY_SORT_TYPE.DEFAULT,
+)
+export const automaticDisconnection = useStorage('config/automatic-disconnection', true)
+export const truncateProxyName = useStorage('config/truncate-proxy-name', true)
+export const disableProxiesPageTextSelect = useStorage(
+  'config/disable-proxies-page-text-select',
+  true,
+)
+export const proxyPreviewType = useStorage('config/proxy-preview-type', PROXY_PREVIEW_TYPE.AUTO)
+export const hideUnavailableProxies = useStorage('config/hide-unavailable-proxies', false)
+export const lowLatency = useStorage('config/low-latency', 400)
+export const mediumLatency = useStorage('config/medium-latency', 800)
+export const IPv6test = useStorage('config/ipv6-test', false)
+export const proxyCardSize = useStorage<PROXY_CARD_SIZE>(
+  'config/proxy-card-size',
+  PROXY_CARD_SIZE.LARGE,
+)
+export const minProxyCardWidth = useStorage<number>(
+  'config/min-proxy-card-width',
+  getMinCardWidth(proxyCardSize.value),
+)
+export const manageHiddenGroup = useStorage('config/manage-hidden-group-mode', false)
+
+export const displayGlobalByMode = useStorage('config/display-global-by-mode', false)
+
+export const proxyGroupIconSize = useStorage('config/proxy-group-icon-size', 24)
+export const proxyGroupIconMargin = useStorage('config/proxy-group-icon-margin', 6)
+export const iconReflectList = useStorage<
+  {
+    icon: string
+    name: string
+    uuid: string
+  }[]
+>('config/icon-reflect-list', [])
+export const groupProxiesByProvider = useStorage('config/group-proxies-by-provider', false)
+export const useSmartGroupSort = useStorage('config/use-smart-group-sort', false)
+export const groupTestUrls = useStorage<
+  {
+    name: string
+    url: string
+    uuid: string
+  }[]
+>('config/group-test-urls', [])
+
+export const connectionDisplayStyle = useStorage<CONNECTION_DISPLAY_STYLE>(
+  'config/connection-display-style',
+  CONNECTION_DISPLAY_STYLE.AUTO,
+)
+export const isConnectionCard = computed(() => {
+  if (connectionDisplayStyle.value === CONNECTION_DISPLAY_STYLE.CARD) {
+    return true
+  }
+  if (connectionDisplayStyle.value === CONNECTION_DISPLAY_STYLE.TABLE) {
+    return false
+  }
+  return isMiddleScreen.value
+})
+export const proxyChainDirection = useStorage(
+  'config/proxy-chain-direction',
+  PROXY_CHAIN_DIRECTION.NORMAL,
+)
+export const showFullProxyChain = useStorage('config/show-full-proxy-chain', true)
+export const tableSize = useStorage<TABLE_SIZE>('config/connection-table-size', TABLE_SIZE.LARGE)
+export const tableWidthMode = useStorage('config/table-width-mode', TABLE_WIDTH_MODE.AUTO)
+export const connectionTableColumns = useStorage<CONNECTIONS_TABLE_ACCESSOR_KEY[]>(
+  'config/connection-table-columns',
+  [
+    CONNECTIONS_TABLE_ACCESSOR_KEY.Close,
+    CONNECTIONS_TABLE_ACCESSOR_KEY.Host,
+    CONNECTIONS_TABLE_ACCESSOR_KEY.Type,
+    CONNECTIONS_TABLE_ACCESSOR_KEY.Rule,
+    CONNECTIONS_TABLE_ACCESSOR_KEY.Chains,
+    CONNECTIONS_TABLE_ACCESSOR_KEY.DlSpeed,
+    CONNECTIONS_TABLE_ACCESSOR_KEY.UlSpeed,
+    CONNECTIONS_TABLE_ACCESSOR_KEY.Download,
+    CONNECTIONS_TABLE_ACCESSOR_KEY.Upload,
+    CONNECTIONS_TABLE_ACCESSOR_KEY.ConnectTime,
+  ],
+)
+export const connectionCardLines = useStorage<CONNECTIONS_TABLE_ACCESSOR_KEY[][]>(
+  'config/connection-card-lines',
+  DETAILED_CARD_STYLE,
+)
+
+export const sourceIPLabelList = useStorage<SourceIPLabel[]>('config/source-ip-label-list', [])
+export const resolveClientHostname = useStorage('config/resolve-client-hostname', false)
+
+export const displayNowNodeInRule = useStorage('config/display-now-node-in-rule', true)
+export const displayLatencyInRule = useStorage('config/display-latency-in-rule', true)
+export const disconnectOnRuleDisable = useStorage('config/disconnect-on-rule-disable', true)
+export const ruleDisplayStyle = useStorage<LIST_DISPLAY_STYLE>(
+  'config/rule-display-style',
+  LIST_DISPLAY_STYLE.CARD,
+)
+
+export const logRetentionLimit = useStorage<number>('config/log-retention-limit', 1000)
+export const logDisplayStyle = useStorage<LIST_DISPLAY_STYLE>(
+  'config/log-display-style',
+  LIST_DISPLAY_STYLE.CARD,
+)
+export const logSearchHistory = useStorage<string[]>('cache/log-search-history', [])
+
+export const hiddenSettingsItems = useStorage<Record<string, boolean>>(
+  'config/hidden-settings-items',
+  {},
+)
+
+export const settingsMenuOrder = useStorage<SETTINGS_MENU_KEY[]>(
+  'config/settings-menu-order',
+  DEFAULT_SETTINGS_MENU_ORDER,
+)
