@@ -43,6 +43,13 @@ def upsert(kind: str, name: str, payload: dict) -> None:
         request(f"/api/{kind}", "POST", payload)
 
 
+def ensure_cache_settings() -> None:
+    """Keep remote subscription changes visible without a one-hour stale cache."""
+    settings = request("/api/settings").get("data") or {}
+    if "resourceCacheTtl" not in settings:
+        request("/api/settings", "PATCH", {"resourceCacheTtl": 60})
+
+
 def main() -> None:
     url = env_value("SUBSCRIPTION_URL")
     if not url:
@@ -70,6 +77,7 @@ def main() -> None:
                     "subscriptions": ["origin-al"],
                 },
             )
+            ensure_cache_settings()
             print("Sub-Store 默认订阅和 all 集合已就绪。")
             return
         except (OSError, urllib.error.URLError, json.JSONDecodeError) as exc:
