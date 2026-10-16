@@ -19,7 +19,7 @@ if ! docker compose version >/dev/null 2>&1; then
   exit 1
 fi
 
-if [ ! -f docker-compose.yml ]; then
+if [ ! -f docker-compose.yml ] || [ ! -f scripts/update-subscription.py ]; then
   mkdir -p "$(dirname "$INSTALL_DIR")"
   if [ -e "$INSTALL_DIR" ] && [ "$(find "$INSTALL_DIR" -mindepth 1 -maxdepth 1 2>/dev/null | head -1)" ]; then
     echo "安装目录非空：$INSTALL_DIR" >&2
