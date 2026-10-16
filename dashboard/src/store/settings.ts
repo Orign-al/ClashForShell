@@ -316,7 +316,7 @@ export const proxyFolderMode = useStorage<FOLDER_MODE>(
 
 export const speedtestUrl = useStorage<string>('config/speedtest-url', TEST_URL)
 export const independentLatencyTest = useStorage('config/independent-latency-test', false)
-export const speedtestTimeout = useStorage<number>('config/speedtest-timeout', 5000)
+export const speedtestTimeout = useStorage<number>('config/speedtest-timeout-v2', 15000)
 export const speedtestMode = useStorage<SPEEDTEST_MODE>(
   'config/speedtest-mode',
   SPEEDTEST_MODE.DASHBOARD,

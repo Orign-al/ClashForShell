@@ -11,7 +11,7 @@ import {
 export const IS_APPLE_DEVICE = /Mac|iPod|iPhone|iPad/.test(navigator.platform)
 
 export const GLOBAL = 'GLOBAL'
-export const TEST_URL = 'https://www.gstatic.com/generate_204'
+export const TEST_URL = 'https://www.google.com/generate_204'
 export const IPV6_TEST_URL = 'https://ipv6.google.com/generate_204'
 export const NOT_CONNECTED = 0
 export enum LANG {

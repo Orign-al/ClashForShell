@@ -104,7 +104,7 @@ def main() -> None:
         if reality.get("support-x25519mlkem768") is True:
             lines.append("      support-x25519mlkem768: true")
     if encryption: lines.append(f"    encryption: {encryption}")
-    lines += ["", "proxy-groups:", "  - name: PROXY", "    type: select", "    use:", "      - sub-store", "    proxies:", f"      - {yaml_quote(name)}", "      - DIRECT", "", "proxy-providers:", "  sub-store:", "    type: http", "    url: http://127.0.0.1:23001/download/collection/all?target=ClashMeta", "    path: ./proxy_providers/sub-store.yaml", "    interval: 21600", "    proxy: DIRECT", "    health-check:", "      enable: true", "      interval: 600", "      url: https://www.gstatic.com/generate_204", "", "rules:", "  - GEOSITE,private,DIRECT", "  - GEOIP,private,DIRECT,no-resolve", "  - GEOSITE,cn,DIRECT", "  - GEOIP,CN,DIRECT", "  - MATCH,PROXY", ""]
+    lines += ["", "proxy-groups:", "  - name: PROXY", "    type: select", "    use:", "      - sub-store", "    proxies:", f"      - {yaml_quote(name)}", "      - DIRECT", "", "proxy-providers:", "  sub-store:", "    type: http", "    url: http://127.0.0.1:23001/download/collection/all?target=ClashMeta", "    path: ./proxy_providers/sub-store.yaml", "    interval: 21600", "    proxy: DIRECT", "    health-check:", "      enable: true", "      interval: 600", "      url: https://www.google.com/generate_204", "", "rules:", "  - GEOSITE,private,DIRECT", "  - GEOIP,private,DIRECT,no-resolve", "  - GEOSITE,cn,DIRECT", "  - GEOIP,CN,DIRECT", "  - MATCH,PROXY", ""]
     CONFIG.write_text("\n".join(lines), encoding="utf-8")
     print(f"已更新 {CONFIG}（当前使用：{name}）")
 
