@@ -104,7 +104,12 @@ const testLatencyOneByOneWithTip = async (
           const delay = await latencyTestForSingle(
             name,
             url,
-            Math.min(2000, speedtestTimeout.value),
+            // A fast batch test used to cap each node at 2 seconds. That
+            // made otherwise healthy Reality/VLESS nodes appear offline when
+            // the first connection handshake briefly took longer. Keep the
+            // same lower bound as core-controlled group tests and honor the
+            // timeout selected by the user.
+            Math.max(5000, speedtestTimeout.value),
           )
 
           setHistory(name, delay, groupName)
