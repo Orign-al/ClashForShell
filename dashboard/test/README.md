@@ -98,6 +98,19 @@ pnpm test:setup
 
 每个场景通过后打印一行 `✓`；断言失败时以非零退出码结束。
 
+## 订阅后端自动连接：`pnpm test:subscriptions`
+
+构建并启动 ClashForShell 后运行。脚本使用真实浏览器，验证面板的订阅管理链接、直接访问、新浏览器、旧后端设置、刷新页面、旧 PWA 缓存升级，以及显式指定 `api` / `magicpath` 时的自动连接，并读取真实 Sub-Store 的环境、订阅和集合 API。不会修改订阅数据。
+
+```bash
+pnpm build
+pnpm test:subscriptions
+# 可选：同时验证局域网 IP 或另一域名的访问
+SUB_STORE_ALT_URL=http://192.168.4.52:23002 pnpm test:subscriptions
+```
+
+默认连接 `http://127.0.0.1:23002/`，可以用 `SUB_STORE_URL` 指定其他部署地址，`CHROME_BIN` 指定 Chrome 可执行文件。
+
 ## 单独用假后端
 
 想用真浏览器手动点，可以只把假后端跑起来:

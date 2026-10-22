@@ -30,7 +30,12 @@ import { useI18n } from 'vue-i18n'
 defineProps<{ collapsed: boolean }>()
 
 const { t } = useI18n()
-const subscriptionUrl = computed(
-  () => `${window.location.protocol}//${window.location.hostname}:23002/`,
-)
+const subscriptionUrl = computed(() => {
+  const url = new URL('/', window.location.href)
+
+  url.port = '23002'
+  url.searchParams.set('api', new URL('/mihomo-sub-store-api', url).href)
+
+  return url.href
+})
 </script>

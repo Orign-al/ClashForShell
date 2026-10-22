@@ -21,6 +21,7 @@
     "test:bench": "node test/bench.mjs",
     "test:mock": "node test/mock-server.mjs",
     "test:setup": "node test/setup.mjs",
+    "test:subscriptions": "node test/subscriptions.mjs",
     "test:verify": "node test/verify.mjs",
     "type-check": "vue-tsc --build --force"
   },

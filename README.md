@@ -34,7 +34,11 @@ python3 scripts/update-subscription.py
 docker compose up -d
 ```
 
-打开 Sub-Store，在“订阅”页面可以新增、编辑、刷新订阅；当前订阅会预置为 `origin-al 订阅`，并加入 `all` 集合。Mihomo 会自动从 `all` 集合读取节点。
+打开 Sub-Store，在“订阅”页面可以新增、编辑、刷新订阅；当前订阅会预置为 `origin-al 订阅`。系统每 2 秒检查一次 `all` 合集，将所有现有订阅自动加入，并同步重命名和删除操作，保留合集的节点处理规则和排序。`all` 是供 Mihomo 读取的全部订阅合集；需要单独组合时可新建其他合集。
+
+保存订阅后，在 Zashboard 的“代理提供者”中刷新 `sub-store` 即可加载新节点。仅在 Sub-Store 中新增订阅、但没有加入 Mihomo 使用的合集，会导致空合集下载返回 500；上述自动同步会修复这种情况。没有任何订阅时，请先在网页中添加有效订阅。
+
+从面板点击“订阅管理”或直接打开 `23002` 页面时，会自动连接当前主机上的 Sub-Store 后端，无需输入 backend path。地址随浏览器访问的主机名或 IP 生成，迁移部署无需修改 IP。手动配置时，后端路径为 `/mihomo-sub-store-api`（同一主机的 `23002` 端口）；显式传入 `?api=...` 或 `?magicpath=...` 可以连接自定义后端。
 
 更新订阅：
 
@@ -65,3 +69,12 @@ cd ..
 docker compose build --pull=false
 docker compose up -d
 ```
+
+验证订阅合集同步（在项目根目录执行，使用临时数据且不连接外网）：
+
+```bash
+docker run --rm --network none --entrypoint node \
+  -v "$PWD/scripts:/tests:ro" clashforshell:latest /tests/test-substore.mjs
+```
+
+测试覆盖空合集修复、新增 / 重命名 / 删除订阅、处理规则和排序保留、合集删除后的恢复，以及订阅后端重启后的自动恢复。面板的浏览器测试见 `dashboard/test/README.md`。

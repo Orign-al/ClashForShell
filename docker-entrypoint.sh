@@ -12,4 +12,22 @@ if [ -d "$builtin_ui_dir" ]; then
   cp -a "$builtin_ui_dir"/. "$ui_dir"/
 fi
 
-exec /entrypoint.sh "$@"
+node /opt/clashforshell/configure-substore.mjs
+node /opt/clashforshell/sync-substore.mjs &
+sync_pid=$!
+
+/entrypoint.sh "$@" &
+service_pid=$!
+
+cleanup() {
+  trap '' TERM INT
+  kill -TERM "$sync_pid" "$service_pid" 2>/dev/null || true
+  wait "$service_pid" 2>/dev/null || true
+  wait "$sync_pid" 2>/dev/null || true
+}
+trap 'cleanup; exit 0' TERM INT
+
+status=0
+wait "$service_pid" || status=$?
+cleanup
+exit "$status"

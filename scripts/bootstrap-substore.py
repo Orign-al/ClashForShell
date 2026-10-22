@@ -68,15 +68,24 @@ def main() -> None:
                     "url": url,
                 },
             )
-            upsert(
-                "collections",
-                "all",
-                {
-                    "name": "all",
-                    "displayName": "全部节点",
-                    "subscriptions": ["origin-al"],
-                },
-            )
+            # Keep subscriptions added in the web UI and existing collection
+            # processors when the installer is run again.
+            names = [item["name"] for item in request("/api/subs").get("data", [])]
+            collections = request("/api/collections").get("data", [])
+            current = next((item for item in collections if item.get("name") == "all"), None)
+            if current is None:
+                request(
+                    "/api/collections",
+                    "POST",
+                    {"name": "all", "displayName": "全部节点", "subscriptions": names},
+                )
+            else:
+                subscriptions = list(
+                    dict.fromkeys(
+                        [name for name in current.get("subscriptions", []) if name in names] + names
+                    )
+                )
+                request("/api/collection/all", "PATCH", {"subscriptions": subscriptions})
             ensure_cache_settings()
             print("Sub-Store 默认订阅和 all 集合已就绪。")
             return
