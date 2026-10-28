@@ -15,7 +15,9 @@ curl -fsSL https://raw.githubusercontent.com/Orign-al/ClashForShell/main/install
   | SUBSCRIPTION_URL='https://example.com/your-subscription' bash
 ```
 
-安装脚本会自动克隆仓库、生成本地配置、构建运行镜像、启动服务，并在 Sub-Store 中创建 `origin-al` 订阅和 `all` 集合。没有订阅地址时可以直接回车，之后在网页中新增。
+安装脚本会自动克隆仓库、生成本地配置、构建运行镜像和启动服务；提供订阅地址时会在 Sub-Store 中创建 `origin-al` 订阅和 `all` 集合。没有订阅地址时可以直接回车，之后在网页中新增。
+
+通过 `curl | bash` 安装时，订阅地址从当前终端读取，不会把安装脚本内容误当成地址；在没有交互终端的环境中会自动以空订阅启动，之后从 `23002` 网页添加订阅。
 
 此目录运行一个独立的 Mihomo Docker 实例，代理和管理页面监听所有网卡：
 

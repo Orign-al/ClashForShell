@@ -8,6 +8,7 @@ import re
 import sys
 import urllib.parse
 import urllib.request
+import secrets
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 ENV = ROOT / ".env"
@@ -21,13 +22,44 @@ def load_env() -> str:
             value = line.partition("=")[2].strip().strip('"').strip("'")
             if value:
                 return value
-    raise SystemExit(".env 中未设置 SUBSCRIPTION_URL")
+    return ""
 
 def yaml_quote(value: str) -> str:
     return '"' + value.replace('\\', '\\\\').replace('"', '\\"') + '"'
 
+def existing_secret() -> str:
+    if CONFIG.exists():
+        match = re.search(r'^secret:\s*"([^"]*)"\s*$', CONFIG.read_text(encoding="utf-8"), re.MULTILINE)
+        if match:
+            return match.group(1)
+    return secrets.token_urlsafe(32)
+
+def write_empty_config() -> None:
+    """Create a usable LAN configuration before the first web subscription."""
+    secret = existing_secret()
+    lines = [
+        "mixed-port: 27890", "allow-lan: true", "bind-address: 0.0.0.0", "mode: rule",
+        "log-level: info", "ipv6: false", "", "external-controller: 0.0.0.0:29090",
+        f"secret: {yaml_quote(secret)}", "external-ui: /root/.config/mihomo/ui", "", "profile:", "  store-selected: true", "",
+        "dns:", "  enable: true", "  ipv6: false", "  enhanced-mode: fake-ip", "  fake-ip-range: 198.18.0.1/16",
+        "  nameserver:", "    - 223.5.5.5", "    - 114.114.114.114",
+        "  proxy-server-nameserver:", "    - 223.5.5.5", "    - 114.114.114.114",
+        "  fallback:", "    - 223.5.5.5", "    - 114.114.114.114",
+        "  fallback-filter:", "    geoip: true", "    geoip-code: CN", "", "proxies: []", "",
+        "proxy-groups:", "  - name: PROXY", "    type: select", "    use:", "      - sub-store", "    proxies:", "      - DIRECT", "",
+        "proxy-providers:", "  sub-store:", "    type: http", "    url: http://127.0.0.1:23001/download/collection/all?target=ClashMeta", "    path: ./proxy_providers/sub-store.yaml", "    interval: 21600", "    proxy: DIRECT", "    health-check:", "      enable: true", "      interval: 600", "      url: https://www.google.com/generate_204", "",
+        "rules:", "  - GEOSITE,private,DIRECT", "  - GEOIP,private,DIRECT,no-resolve", "  - GEOSITE,cn,DIRECT", "  - GEOIP,CN,DIRECT", "  - MATCH,PROXY", "",
+    ]
+    CONFIG.write_text("\n".join(lines), encoding="utf-8")
+    print(f"已生成 {CONFIG}（尚未设置订阅，请稍后在网页中添加）")
+
 def main() -> None:
     url = load_env()
+    if not url:
+        if "--empty" not in sys.argv:
+            raise SystemExit(".env 中未设置 SUBSCRIPTION_URL；可在网页中添加订阅，或使用 install.sh 完成初始化")
+        write_empty_config()
+        return
     request = urllib.request.Request(url, headers={"User-Agent": "mihomo-docker/1.0"})
     with urllib.request.urlopen(request, timeout=30) as response:
         raw = response.read()
@@ -67,8 +99,6 @@ def main() -> None:
         if match:
             secret = match.group(1)
     if not secret:
-        import secrets
-
         secret = secrets.token_urlsafe(32)
     server = proxy.get("server")
     port = proxy.get("port")

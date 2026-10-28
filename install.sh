@@ -30,15 +30,30 @@ if [ ! -f docker-compose.yml ] || [ ! -f scripts/update-subscription.py ]; then
 fi
 
 if [ -z "${SUBSCRIPTION_URL:-}" ]; then
-  printf '请输入 Mihomo 订阅地址（可留空，稍后在网页中添加）： '
-  read -r SUBSCRIPTION_URL
+  SUBSCRIPTION_URL=""
+  if [ -t 0 ]; then
+    printf '请输入 Mihomo 订阅地址（可留空，稍后在网页中添加）： '
+    IFS= read -r SUBSCRIPTION_URL || SUBSCRIPTION_URL=""
+  elif exec 3</dev/tty 2>/dev/null; then
+    if [ -t 3 ]; then
+      # With `curl URL | bash`, stdin is the script itself. Read the answer
+      # from the controlling terminal so the next shell line is not consumed.
+      printf '请输入 Mihomo 订阅地址（可留空，稍后在网页中添加）： '
+      IFS= read -r SUBSCRIPTION_URL <&3 || SUBSCRIPTION_URL=""
+    fi
+    exec 3<&-
+  fi
 fi
 umask 077
 printf 'SUBSCRIPTION_URL=%s\n' "$SUBSCRIPTION_URL" > .env
 
 mkdir -p config
 rm -rf config/ui
-python3 scripts/update-subscription.py
+if [ -n "$SUBSCRIPTION_URL" ]; then
+  python3 scripts/update-subscription.py
+else
+  python3 scripts/update-subscription.py --empty
+fi
 docker compose build
 docker compose up -d --remove-orphans
 
