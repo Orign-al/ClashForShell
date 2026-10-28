@@ -12,6 +12,7 @@ import urllib.request
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 ENV = ROOT / ".env"
 BASE = "http://127.0.0.1:23001"
+LOCAL_OPENER = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
 
 def env_value(name: str) -> str:
@@ -29,7 +30,10 @@ def request(path: str, method: str = "GET", payload: dict | None = None) -> dict
         method=method,
         headers={"Content-Type": "application/json"},
     )
-    with urllib.request.urlopen(req, timeout=15) as response:
+    # This API is inside the same host network namespace. Never send it
+    # through HTTP(S)_PROXY, which is commonly configured for the remote
+    # subscription download during installation.
+    with LOCAL_OPENER.open(req, timeout=15) as response:
         return json.loads(response.read())
 
 

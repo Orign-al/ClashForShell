@@ -34,7 +34,7 @@ if [ -z "${SUBSCRIPTION_URL:-}" ]; then
   if [ -t 0 ]; then
     printf '请输入 Mihomo 订阅地址（可留空，稍后在网页中添加）： '
     IFS= read -r SUBSCRIPTION_URL || SUBSCRIPTION_URL=""
-  elif exec 3</dev/tty 2>/dev/null; then
+  elif { exec 3</dev/tty; } 2>/dev/null; then
     if [ -t 3 ]; then
       # With `curl URL | bash`, stdin is the script itself. Read the answer
       # from the controlling terminal so the next shell line is not consumed.
@@ -57,14 +57,44 @@ fi
 docker compose build
 docker compose up -d --remove-orphans
 
-for _ in $(seq 1 60); do
-  if curl -fsS --max-time 2 http://127.0.0.1:23001/api/collections >/dev/null 2>&1; then
+sub_store_ready=0
+for attempt in $(seq 1 60); do
+  # The host may use an HTTP proxy for GitHub/subscription downloads. The
+  # health probe must always go directly to this machine's Sub-Store.
+  if curl --noproxy '*' -fsS --max-time 2 http://127.0.0.1:23001/api/collections >/dev/null 2>&1; then
+    sub_store_ready=1
     break
+  fi
+  if [ $((attempt % 10)) -eq 0 ]; then
+    echo "等待 Sub-Store 启动（${attempt}/60 秒）..." >&2
   fi
   sleep 1
 done
+if [ "$sub_store_ready" -ne 1 ]; then
+  echo 'Sub-Store 启动超时，请运行 docker compose ps 和 docker compose logs mihomo 检查。' >&2
+  exit 1
+fi
 python3 scripts/bootstrap-substore.py
 docker compose restart mihomo >/dev/null
+
+controller_token="$(sed -n 's/^secret: "\([^\"]*\)"$/\1/p' config/config.yaml)"
+mihomo_ready=0
+for attempt in $(seq 1 60); do
+  if curl --noproxy '*' -fsS --max-time 2 \
+    --header "Authorization: Bearer $controller_token" \
+    http://127.0.0.1:29090/version >/dev/null 2>&1; then
+    mihomo_ready=1
+    break
+  fi
+  if [ $((attempt % 10)) -eq 0 ]; then
+    echo "等待 Mihomo 控制器启动（${attempt}/60 秒）..." >&2
+  fi
+  sleep 1
+done
+if [ "$mihomo_ready" -ne 1 ]; then
+  echo 'Mihomo 控制器启动超时，请运行 docker compose ps 和 docker compose logs mihomo 检查。' >&2
+  exit 1
+fi
 
 echo
 echo 'ClashForShell 已安装并启动。'
@@ -72,4 +102,5 @@ echo "安装目录：$PWD"
 echo '代理端口：0.0.0.0:27890'
 echo 'Zashboard： http://<主机IP>:29090/ui'
 echo '订阅管理： http://<主机IP>:23002'
-echo '控制器令牌：grep "^secret:" config/config.yaml'
+echo 'Zashboard 首次连接时，“密码”填写 Mihomo 控制器令牌，不是 Linux 登录密码。'
+echo '读取令牌：sed -n '\''s/^secret: "\\(.*\\)"$/\\1/p'\'' config/config.yaml'

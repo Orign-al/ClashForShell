@@ -27,6 +27,14 @@ curl -fsSL https://raw.githubusercontent.com/Orign-al/ClashForShell/main/install
 
 容器使用 host 网络。控制器仍需要令牌，令牌保存在 `config/config.yaml` 的 `secret` 字段。
 
+首次打开 Zashboard 时，设置页的“密码”填写 Mihomo 控制器令牌，不是 Linux 登录密码。只复制 `secret` 引号内的值：
+
+```bash
+sed -n 's/^secret: "\\(.*\\)"$/\\1/p' config/config.yaml
+```
+
+如果浏览器保存了之前部署的后端，请删除该站点的本地存储或使用无痕窗口重新连接。
+
 手动部署：
 
 ```bash
